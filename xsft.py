@@ -109,7 +109,12 @@ class MyWindow(Gtk.Window):
                                  temperature_to_gamma(self.temperature.get_value()))
 
 
-win = MyWindow()
-win.connect("delete-event", Gtk.main_quit)
-win.show_all()
-Gtk.main()
+def main():
+    win = MyWindow()
+    win.connect("delete-event", Gtk.main_quit)
+    win.show_all()
+    Gtk.main()
+
+
+if __name__ == '__main__':
+    main()
