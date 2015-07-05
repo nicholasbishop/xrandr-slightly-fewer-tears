@@ -85,8 +85,10 @@ class MyWindow(Gtk.Window):
 
         self.box.add(Gtk.Label('Brightness'))
         self.brightness = self.add_hscale(20, 100)
+        self.brightness.set_value(80)
         self.box.add(Gtk.Label('Temperature (K)'))
-        self.temperature = self.add_hscale(1000, 40000)
+        self.temperature = self.add_hscale(1000, 25000)
+        self.temperature.set_value(5500)
 
     def add_hscale(self, min_val, max_val):
         scale = Gtk.Scale(orientation=Gtk.Orientation.HORIZONTAL, digits=0)
