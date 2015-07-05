@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# Licensed under the GNU GPLv3+
+
 import math
 import subprocess
 
