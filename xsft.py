@@ -34,8 +34,7 @@ def set_brightness_and_gamma(outputs, brightness, gamma):
 
 def color_temperature_to_rgb(kelvin):
     """Adapted from tannerhelland.com/4435."""
-    temp = kelvin / 100.0;
-
+    temp = kelvin / 100.0
     if temp <= 66:
         red = 255
 
@@ -52,7 +51,7 @@ def color_temperature_to_rgb(kelvin):
         red = 329.698727446 * math.pow(red, -0.1332047592)
 
         green = temp - 60
-        green = 288.1221695283 * math.pow(green, -0.0755148492 )
+        green = 288.1221695283 * math.pow(green, -0.0755148492)
 
         blue = 255
 
