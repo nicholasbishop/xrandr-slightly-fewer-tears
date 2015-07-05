@@ -3,6 +3,7 @@
 # Licensed under the GNU GPLv3+
 
 import math
+import os
 import subprocess
 
 from gi.repository import Gtk
@@ -77,23 +78,24 @@ def temperature_to_gamma(kelvin):
 
 
 class MyWindow(Gtk.Window):
-    def __init__(self):
+    def __init__(self, conf):
         Gtk.Window.__init__(self, title="xrandr-slightly-fewer-tears")
         self.set_default_size(640, -1)
+
+        self.conf = conf
 
         self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, border_width=10)
         self.add(self.box)
 
         self.box.add(Gtk.Label('Brightness'))
-        self.brightness = self.add_hscale(20, 100)
-        self.brightness.set_value(80)
+        self.brightness = self.add_hscale(20, 100, conf.brightness)
         self.box.add(Gtk.Label('Temperature (K)'))
-        self.temperature = self.add_hscale(1000, 25000)
-        self.temperature.set_value(5500)
+        self.temperature = self.add_hscale(1000, 25000, conf.temperature)
 
-    def add_hscale(self, min_val, max_val):
+    def add_hscale(self, min_val, max_val, def_val):
         scale = Gtk.Scale(orientation=Gtk.Orientation.HORIZONTAL, digits=0)
         scale.set_range(min_val, max_val)
+        scale.set_value(def_val)
         scale.connect('value-changed', lambda _: self.update())
         self.box.add(scale)
         return scale
@@ -103,13 +105,53 @@ class MyWindow(Gtk.Window):
         if brightness < 0.2:
             brightness = 0.2
 
-        set_brightness_and_gamma(get_connected_outputs(),
-                                 brightness,
-                                 temperature_to_gamma(self.temperature.get_value()))
+        gamma = temperature_to_gamma(self.temperature.get_value())
+        set_brightness_and_gamma(get_connected_outputs(), brightness, gamma)
+
+        self.conf.brightness = self.brightness.get_value()
+        self.conf.temperature = self.temperature.get_value()
+        self.conf.save()
+
+
+class Config(object):
+    def __init__(self):
+        self.pardir = os.path.join(os.getenv('HOME'),
+                                   '.config',
+                                   'xrandr-slightly-fewer-tears')
+        self.path = os.path.join(self.pardir, 'xsft.conf')
+
+        # Defaults
+        self.brightness = 80
+        self.temperature = 5500
+
+        try:
+            self.load()
+        except IOError:
+            pass
+
+    def load(self):
+        with open(self.path) as conf_file:
+            for line in conf_file.readlines():
+                parts = line.split('=')
+                key = parts[0]
+                val = float(parts[1])
+                if key == 'brightness':
+                    self.brightness = val
+                if key == 'temperature':
+                    self.temperature = val
+
+    def save(self):
+        if not os.path.isdir(self.pardir):
+            os.mkdir(self.pardir)
+        with open(self.path, 'w') as conf_file:
+            for key in ('brightness', 'temperature'):
+                val = getattr(self, key)
+                conf_file.write('{}={}\n'.format(key, val))
 
 
 def main():
-    win = MyWindow()
+    conf = Config()
+    win = MyWindow(conf)
     win.connect("delete-event", Gtk.main_quit)
     win.show_all()
     Gtk.main()
