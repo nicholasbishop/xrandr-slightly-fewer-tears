@@ -94,6 +94,9 @@ class MyWindow(Gtk.Window):
         self.box.add(Gtk.Label('Temperature (K)'))
         self.temperature = self.add_hscale(1000, 25000, conf.temperature)
 
+        # Update immediately so that saved values are loaded on startup
+        self.update()
+
     def add_hscale(self, min_val, max_val, def_val):
         scale = Gtk.Scale(orientation=Gtk.Orientation.HORIZONTAL, digits=0)
         scale.set_range(min_val, max_val)
