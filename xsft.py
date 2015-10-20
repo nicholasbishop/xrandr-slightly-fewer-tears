@@ -92,7 +92,7 @@ class MyWindow(Gtk.Window):
         self.box.add(Gtk.Label('Brightness'))
         self.brightness = self.add_hscale(20, 100, conf.brightness)
         self.box.add(Gtk.Label('Temperature (K)'))
-        self.temperature = self.add_hscale(1000, 25000, conf.temperature)
+        self.temperature = self.add_hscale(2000, 10000, conf.temperature)
 
         # Update immediately so that saved values are loaded on startup
         self.update()
