@@ -1,4 +1,6 @@
 [Desktop Entry]
 Name=Xrandr Slightly Fewer Tears
 Exec=xsft.py
+Icon=xsft
 Type=Application
+Categories=GTK;GNOME;Utility;
