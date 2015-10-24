@@ -1,0 +1,4 @@
+[Desktop Entry]
+Name=Xrandr Slightly Fewer Tears
+Exec=xsft.py
+Type=Application
