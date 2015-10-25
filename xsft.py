@@ -89,13 +89,23 @@ class MyWindow(Gtk.Window):
         self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, border_width=10)
         self.add(self.box)
 
-        self.box.add(Gtk.Label('Brightness'))
+        self.brightness_checkbutton = self.add_checkbutton(
+            'Brightness', conf.brightness_enabled)
         self.brightness = self.add_hscale(20, 100, conf.brightness)
-        self.box.add(Gtk.Label('Temperature (K)'))
+
+        self.temperature_checkbutton = self.add_checkbutton(
+            'Temperature (K)', conf.temperature_enabled)
         self.temperature = self.add_hscale(2000, 10000, conf.temperature)
 
         # Update immediately so that saved values are loaded on startup
         self.update()
+
+    def add_checkbutton(self, label, default):
+        btn = Gtk.CheckButton(label)
+        btn.set_active(default)
+        btn.connect('toggled', lambda _: self.update())
+        self.box.add(btn)
+        return btn
 
     def add_hscale(self, min_val, max_val, def_val):
         scale = Gtk.Scale(orientation=Gtk.Orientation.HORIZONTAL, digits=0)
@@ -105,17 +115,29 @@ class MyWindow(Gtk.Window):
         self.box.add(scale)
         return scale
 
-    def update(self):
-        brightness = self.brightness.get_value() / 100.0
-        if brightness < 0.2:
-            brightness = 0.2
-
-        gamma = temperature_to_gamma(self.temperature.get_value())
-        set_brightness_and_gamma(get_connected_outputs(), brightness, gamma)
-
+    def save_conf(self):
+        self.conf.brightness_enabled = self.brightness_checkbutton.get_active()
+        self.conf.temperature_enabled = self.temperature_checkbutton.get_active()
         self.conf.brightness = self.brightness.get_value()
         self.conf.temperature = self.temperature.get_value()
         self.conf.save()
+
+    def update(self):
+        if self.brightness_checkbutton.get_active():
+            brightness = self.brightness.get_value() / 100.0
+            if brightness < 0.2:
+                brightness = 0.2
+        else:
+            brightness = 1.0
+
+        if self.temperature_checkbutton.get_active():
+            gamma = temperature_to_gamma(self.temperature.get_value())
+        else:
+            gamma = (1, 1, 1)
+
+        set_brightness_and_gamma(get_connected_outputs(), brightness, gamma)
+
+        self.save_conf()
 
 
 class Config(object):
@@ -125,9 +147,17 @@ class Config(object):
                                    'xrandr-slightly-fewer-tears')
         self.path = os.path.join(self.pardir, 'xsft.conf')
 
-        # Defaults
-        self.brightness = 80
-        self.temperature = 5500
+        # key:default
+        self.items = {
+            'brightness': 80.0,
+            'brightness_enabled': True,
+            'temperature': 5500.0,
+            'temperature_enabled': True
+        }
+
+        # Set defaults
+        for key in self.items:
+            setattr(self, key, self.items[key])
 
         try:
             self.load()
@@ -139,17 +169,21 @@ class Config(object):
             for line in conf_file.readlines():
                 parts = line.split('=')
                 key = parts[0]
-                val = float(parts[1])
-                if key == 'brightness':
-                    self.brightness = val
-                if key == 'temperature':
-                    self.temperature = val
+                val_str = parts[1]
+
+                default = self.items.get(key)
+                if default is not None:
+                    if isinstance(default, bool):
+                        val = bool(val_str)
+                    else:
+                        val = float(val_str)
+                    setattr(self, key, val)
 
     def save(self):
         if not os.path.isdir(self.pardir):
             os.mkdir(self.pardir)
         with open(self.path, 'w') as conf_file:
-            for key in ('brightness', 'temperature'):
+            for key in self.items:
                 val = getattr(self, key)
                 conf_file.write('{}={}\n'.format(key, val))
 
